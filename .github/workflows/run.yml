@@ -2,14 +2,16 @@ name: Daily NARS Check
 
 on:
   schedule:
-    - cron: '0 1 * * *' 
-  workflow_dispatch: 
+    - cron: '0 1 * * *'
+  workflow_dispatch:
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
+    permissions: # 명시적으로 권한 부여
+      contents: write
     steps:
-      - uses: actions/checkout@v4 # 최신 버전으로 업데이트
+      - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -25,14 +27,8 @@ jobs:
           CHAT_ID: ${{ secrets.CHAT_ID }}
         run: python main.py
 
-      - name: Check files # 파일이 진짜 있는지 로그에 찍어보기 (디버깅용)
-        run: ls -al
-
-      - name: Auto Commit
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          # 파일 이름을 특정하지 않고 모든 변경사항(All)을 추가
-          git add -A 
-          # 변경사항이 있을 때만 커밋하고, 없으면 에러 없이 통과
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Update last post ID" && git push)
+      - name: Auto Commit Changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Update last post ID"
+          file_pattern: 'last_post.txt'
