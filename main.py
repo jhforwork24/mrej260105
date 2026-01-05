@@ -13,7 +13,6 @@ def check_nars():
     res = requests.get(URL, headers=headers)
     soup = BeautifulSoup(res.text, 'html.parser')
     
-    # 공지사항을 제외한 첫 번째 일반 게시글 찾기
     post = soup.select_one('table.board_list tbody tr')
     if not post: return
 
@@ -22,21 +21,23 @@ def check_nars():
     link = BASE_URL + title_elem['href']
     post_id = post.select_one('td.num').get_text(strip=True)
 
-    # 이전 기록 확인
+    # 파일이 없으면 빈 문자열로 시작 (에러 방지)
     last_id = ""
     if os.path.exists(DB_FILE):
         with open(DB_FILE, 'r') as f:
             last_id = f.read().strip()
 
-    # 새 글일 경우 텔레그램 전송
+    # 새 글 발견 시 알림 발송 및 ID 저장
     if post_id != last_id:
         msg = f"🔔 [NARS 신규 보고서]\n\n제목: {title}\n링크: {link}"
         url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
         requests.get(url, params={'chat_id': CHAT_ID, 'text': msg})
         
-        # 최신 ID 저장
         with open(DB_FILE, 'w') as f:
             f.write(post_id)
+        print(f"New post found: {post_id}")
+    else:
+        print("No new posts.")
 
 if __name__ == "__main__":
     check_nars()
