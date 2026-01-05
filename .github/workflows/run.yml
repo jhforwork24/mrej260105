@@ -21,10 +21,11 @@ jobs:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
         run: python main.py
-      - name: Auto Commit # 변경된 last_post.txt 저장
+      - name: Auto Commit
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add last_post.txt
-          git commit -m "Update last post ID" || exit 0
-          git push
+          # 파일이 수정되지 않았을 때(nothing to commit) 에러가 나지 않도록 처리
+          git commit -m "Update last post ID" || echo "No changes to commit"
+          git push || echo "No changes to push"
