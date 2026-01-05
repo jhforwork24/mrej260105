@@ -1,0 +1,30 @@
+name: Daily NARS Check
+
+on:
+  schedule:
+    - cron: '0 1 * * *' # 매일 한국시간 오전 10시 (UTC 1:00)
+  workflow_dispatch: # 수동 실행 버튼 추가
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4
+      - name: Run script
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+        run: python main.py
+      - name: Auto Commit # 변경된 last_post.txt 저장
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add last_post.txt
+          git commit -m "Update last post ID" || exit 0
+          git push
