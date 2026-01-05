@@ -2,30 +2,37 @@ name: Daily NARS Check
 
 on:
   schedule:
-    - cron: '0 1 * * *' # 매일 한국시간 오전 10시 (UTC 1:00)
-  workflow_dispatch: # 수동 실행 버튼 추가
+    - cron: '0 1 * * *' 
+  workflow_dispatch: 
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4 # 최신 버전으로 업데이트
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
+
       - name: Install dependencies
         run: pip install requests beautifulsoup4
+
       - name: Run script
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
         run: python main.py
+
+      - name: Check files # 파일이 진짜 있는지 로그에 찍어보기 (디버깅용)
+        run: ls -al
+
       - name: Auto Commit
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add last_post.txt
-          # 파일이 수정되지 않았을 때(nothing to commit) 에러가 나지 않도록 처리
-          git commit -m "Update last post ID" || echo "No changes to commit"
-          git push || echo "No changes to push"
+          # 파일 이름을 특정하지 않고 모든 변경사항(All)을 추가
+          git add -A 
+          # 변경사항이 있을 때만 커밋하고, 없으면 에러 없이 통과
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update last post ID" && git push)
